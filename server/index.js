@@ -4,12 +4,16 @@ const { chats } = require("./data/data");
 const mongo = require("./config/db");
 const colors = require("colors");
 const { userRoutes } = require("./routes/userRoutes");
+const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 const app = express();
 dotenv.config();
 mongo();
 app.use(express.json());
 app.use(userRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
 
 // app.get("/", (req, res) => {
 //   res.send("API is running");
