@@ -1,4 +1,6 @@
 const asyncHandler = require("express-async-handler");
+const req = require("express/lib/request");
+const res = require("express/lib/response");
 const { generateToken } = require("../config/generateToken");
 const { User } = require("../models/userModel");
 
@@ -35,6 +37,7 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
+  console.log(req.headers);
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400);
@@ -55,4 +58,17 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { registerUser, loginUser };
+const allUsers = asyncHandler(async (req, res) => {
+  const keyword = req.query.search
+    ? {
+        $or: [
+          { name: { $regex: req.query.search, $in: "i" } },
+          { email: { $regex: req.query.search, $in: "i" } },
+        ],
+      }
+    : {};
+  const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
+  res.send(users);
+});
+
+module.exports = { registerUser, loginUser, allUsers };
