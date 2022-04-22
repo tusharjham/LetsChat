@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Container,
@@ -10,7 +10,16 @@ import {
 } from "@chakra-ui/react";
 import Login from "../components/authentication/Login";
 import SignUp from "../components/authentication/SignUp";
+import { useNavigate } from "react-router-dom";
 const HomePage = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState("");
+  useEffect(() => {
+    setUser(JSON.parse(localStorage.getItem("user-info")));
+    if (user) {
+      navigate("/chats");
+    }
+  }, [navigate, user]);
   return (
     <Container maxW={"xl"} boxSizing="border-box">
       <Box
@@ -23,7 +32,7 @@ const HomePage = () => {
         borderWidth="1px"
         borderRadius="lg"
         fontSize="5xl"
-        fontFamily="Bebas Neue"
+        fontFamily="inherit"
         color="whiteAlpha.800"
       >
         Let's Chat

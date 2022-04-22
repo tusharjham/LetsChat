@@ -8,3 +8,6 @@
   background-repeat: no-repeat;
   background-position: center;
 }
+::-webkit-scrollbar {
+  width: 0px;
+}
