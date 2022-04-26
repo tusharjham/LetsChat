@@ -21,9 +21,9 @@ const ProfileModal = ({ user, children }) => {
       {children ? (
         <span onClick={onOpen}>{children}</span>
       ) : (
-        <span>
+        <Button onClick={onOpen}>
           <i class="fa-solid fa-eye"></i>
-        </span>
+        </Button>
       )}
       <Modal
         isOpen={isOpen}
