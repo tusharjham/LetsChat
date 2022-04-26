@@ -11,3 +11,7 @@
 ::-webkit-scrollbar {
   width: 0px;
 }
+
+.userbadgeitem:hover {
+  color: rgb(210, 1, 1);
+}

@@ -4,6 +4,7 @@ import { Box, Button, Stack, Text, useToast, VStack } from "@chakra-ui/react";
 import axios from "axios";
 import ChatLoading from "../ChatLoading";
 import { getSender } from "../../config/ChatLogic";
+import GroupChatModal from "./GroupChatModal";
 
 const MyChats = () => {
   const { user, selectedChat, setSelectedChat, chats, setChats } = ChatState();
@@ -56,7 +57,9 @@ const MyChats = () => {
         alignItems={"center"}
       >
         My Chats
-        <Button d="flex">+ New Group Chat</Button>
+        <GroupChatModal>
+          <Button d="flex">+ New Group Chat</Button>
+        </GroupChatModal>
       </Box>
       <Box
         d="flex"
