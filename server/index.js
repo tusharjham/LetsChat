@@ -6,6 +6,7 @@ const colors = require("colors");
 const { userRoutes } = require("./routes/userRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const { chatRoutes } = require("./routes/chatRoutes");
+const { messageRoutes } = require("./routes/messageRoutes");
 
 const app = express();
 dotenv.config();
@@ -13,6 +14,7 @@ mongo();
 app.use(express.json());
 app.use(userRoutes);
 app.use(chatRoutes);
+app.use(messageRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
