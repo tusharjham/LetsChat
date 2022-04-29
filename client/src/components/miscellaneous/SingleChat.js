@@ -1,12 +1,92 @@
-import { Box, Button, Text } from "@chakra-ui/react";
-import React from "react";
+import {
+  Box,
+  Button,
+  FormControl,
+  Input,
+  Spinner,
+  Text,
+  useToast,
+} from "@chakra-ui/react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { getSender, getSenderFull } from "../../config/ChatLogic";
 import { ChatState } from "../../Context/ChatProvider";
 import ProfileModal from "./ProfileModal";
 import UpdateGroupChatModal from "./UpdateGroupChatModal";
+import "./style.css";
+import ScrollableChat from "./ScrollableChat";
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const { user, selectedChat, setSelectedChat } = ChatState();
+  const [message, setMessage] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const toast = useToast();
+
+  const fetchMessages = async () => {
+    if (!selectedChat) return;
+    try {
+      setLoading(true);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      const { data } = await axios.get(
+        `/api/get-all-messages/${selectedChat._id}`,
+        config
+      );
+      setMessage(data);
+      setLoading(false);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Unable to load Chat messages",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+        position: "top",
+      });
+    }
+  };
+  const sendMessage = async (e) => {
+    if (e.code === "Enter" && newMessage) {
+      try {
+        const config = {
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Bearer ${user.token}`,
+          },
+        };
+        const { data } = await axios.post(
+          "/api/send-message",
+          {
+            content: newMessage,
+            chatId: selectedChat._id,
+          },
+          config
+        );
+        setNewMessage("");
+        setMessage([...message, data]);
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: err.response.message,
+          status: "error",
+          duration: 2000,
+          isClosable: true,
+          position: "top",
+        });
+      }
+    }
+  };
+  const typeHandler = (e) => {
+    setNewMessage(e.target.value);
+  };
+  useEffect(() => {
+    fetchMessages();
+  }, [selectedChat, fetchAgain]);
   return (
     <>
       {selectedChat ? (
@@ -45,6 +125,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 <UpdateGroupChatModal
                   fetchAgain={fetchAgain}
                   setFetchAgain={setFetchAgain}
+                  fetchMessages={fetchMessages}
                 />
               </>
             )}
@@ -52,7 +133,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           <Box
             d={"flex"}
             flexDir={"column"}
-            justifyContent={"flex-start"}
+            justifyContent={"flex-end"}
             p={3}
             bg={"#E8E8E8"}
             w={"100%"}
@@ -60,7 +141,25 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             borderRadius={"lg"}
             overflowY={"scroll"}
           >
-            Messages Here
+            {loading ? (
+              <Spinner h={20} w={20} alignSelf={"center"} margin={"auto"} />
+            ) : (
+              <>
+                <div className="messages">
+                  <ScrollableChat message={message} />
+                </div>
+              </>
+            )}
+            <FormControl onKeyDown={sendMessage} isRequired mt={3}>
+              <Input
+                variant={"filled"}
+                placeholder={"Enter a message"}
+                onChange={typeHandler}
+                focusBorderColor={"red.700"}
+                bg={"#eaeaea"}
+                value={newMessage}
+              />
+            </FormControl>
           </Box>
         </>
       ) : (
