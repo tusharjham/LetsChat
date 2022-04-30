@@ -15,15 +15,30 @@ import ProfileModal from "./ProfileModal";
 import UpdateGroupChatModal from "./UpdateGroupChatModal";
 import "./style.css";
 import ScrollableChat from "./ScrollableChat";
+import io from "socket.io-client";
+import Lottie from "react-lottie";
+import animationData from "../../animations/typing.json";
+
+const ENDPOINT = "http://localhost:5000";
+var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const { user, selectedChat, setSelectedChat } = ChatState();
   const [message, setMessage] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const toast = useToast();
-
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
   const fetchMessages = async () => {
     if (!selectedChat) return;
     try {
@@ -39,6 +54,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       );
       setMessage(data);
       setLoading(false);
+      socket.emit("join chat", selectedChat._id);
     } catch (err) {
       toast({
         title: "Error",
@@ -52,6 +68,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
   const sendMessage = async (e) => {
     if (e.code === "Enter" && newMessage) {
+      socket.emit("stop typing", selectedChat._id);
+
       try {
         const config = {
           headers: {
@@ -59,6 +77,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             Authorization: `Bearer ${user.token}`,
           },
         };
+        setNewMessage("");
         const { data } = await axios.post(
           "/api/send-message",
           {
@@ -67,8 +86,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           },
           config
         );
-        setNewMessage("");
         setMessage([...message, data]);
+        socket.emit("new message", data);
       } catch (err) {
         toast({
           title: "Error",
@@ -83,10 +102,53 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
   const typeHandler = (e) => {
     setNewMessage(e.target.value);
+    if (e.target.value.length === 0) {
+      socket.emit("stop typing", selectedChat._id);
+      setTyping(false);
+      return;
+    }
+    if (!socketConnected) return;
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", selectedChat._id);
+    }
+    let lastTypingTime = new Date().getTime();
+    var timerLength = 3000;
+    setTimeout(() => {
+      let latestTime = new Date().getTime();
+      var timeDiff = latestTime - lastTypingTime;
+      if (timeDiff >= timerLength) {
+        socket.emit("stop typing", selectedChat._id);
+        setTyping(false);
+      }
+    }, timerLength);
   };
   useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("connected", () => {
+      setSocketConnected(true);
+    });
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
+  }, []);
+  useEffect(() => {
     fetchMessages();
+    selectedChatCompare = selectedChat;
   }, [selectedChat, fetchAgain]);
+  useEffect(() => {
+    socket.on("message recieved", (newMessageRecieved) => {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMessageRecieved.chat._id
+      ) {
+        // Give notificaiton
+      } else {
+        setMessage([...message, newMessageRecieved]);
+      }
+    });
+  });
+
   return (
     <>
       {selectedChat ? (
@@ -151,6 +213,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </>
             )}
             <FormControl onKeyDown={sendMessage} isRequired mt={3}>
+              {isTyping ? (
+                <div>
+                  <Lottie
+                    options={defaultOptions}
+                    width={"90px"}
+                    style={{
+                      marginBottom: 15,
+                      marginLeft: 0,
+                      height: "30px",
+                      // width: "15%",
+                    }}
+                  />
+                </div>
+              ) : (
+                <></>
+              )}
               <Input
                 variant={"filled"}
                 placeholder={"Enter a message"}
