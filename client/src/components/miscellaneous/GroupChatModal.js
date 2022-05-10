@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   FormControl,
   Input,
@@ -11,8 +10,6 @@ import {
   ModalHeader,
   ModalOverlay,
   Spinner,
-  Text,
-  Tooltip,
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
@@ -81,10 +78,9 @@ const GroupChatModal = ({ children }) => {
 
   const handleDelete = (user) => {
     var filtered = selectedUsers.filter((x) => {
-      return user._id != x._id;
+      return user._id !== x._id;
     });
     setSelectedUsers(filtered);
-    console.log("deleted users", selectedUsers);
   };
 
   const closeButton = () => {
@@ -128,7 +124,6 @@ const GroupChatModal = ({ children }) => {
         position: "top",
       });
     } catch (err) {
-      console.log("front", err.response.data);
       toast({
         title: "Error",
         description: err.response.data,

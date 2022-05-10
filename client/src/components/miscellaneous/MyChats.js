@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
-import { Box, Button, Stack, Text, useToast, VStack } from "@chakra-ui/react";
+import { Box, Button, Stack, Text, useToast } from "@chakra-ui/react";
 import axios from "axios";
 import ChatLoading from "../ChatLoading";
 import { getSender } from "../../config/ChatLogic";
 import GroupChatModal from "./GroupChatModal";
 
 const MyChats = ({ fetchAgain }) => {
-  const { user, selectedChat, setSelectedChat, chats, setChats } = ChatState();
+  const {
+    user,
+    selectedChat,
+    setSelectedChat,
+    chats,
+    setChats,
+    notification,
+    setNotification,
+  } = ChatState();
   const [loggedUser, setLoggedUser] = useState();
   const toast = useToast();
   const fetchChats = async () => {
@@ -34,8 +42,8 @@ const MyChats = ({ fetchAgain }) => {
   useEffect(() => {
     setLoggedUser(JSON.parse(localStorage.getItem("user-info")));
     fetchChats();
+    setSelectedChat(selectedChat);
   }, [fetchAgain]);
-
   return (
     <Box
       d={{ base: selectedChat ? "none" : "flex", md: "flex" }}
@@ -74,10 +82,17 @@ const MyChats = ({ fetchAgain }) => {
           <Stack overflowY={"scroll"} mt={2}>
             {chats?.map((chat) => (
               <Box
-                onClick={() => setSelectedChat(chat)}
+                onClick={() => {
+                  setSelectedChat(chat);
+                  setNotification(
+                    notification.filter((n) => n.chat._id !== chat._id)
+                  );
+                }}
                 cursor="pointer"
-                bg={selectedChat === chat ? "red.700" : "#f1f1ee"}
-                color={selectedChat === chat ? "whiteAlpha.800" : "black"}
+                bg={selectedChat?._id === chat._id ? "red.700" : "#f1f1ee"}
+                color={
+                  selectedChat?._id === chat._id ? "whiteAlpha.800" : "black"
+                }
                 px={3}
                 py={2}
                 borderRadius={"lg"}
@@ -90,6 +105,14 @@ const MyChats = ({ fetchAgain }) => {
                       ? getSender(loggedUser, chat.users)
                       : null
                     : chat.chatName}
+                  {chat.latestMessage && (
+                    <div style={{ fontSize: "0.8rem" }}>
+                      <b>{chat.latestMessage.sender.name}:</b>
+                      {chat.latestMessage.content.length > 10
+                        ? `${chat.latestMessage.content.slice(0, 5)}...`
+                        : `${chat.latestMessage.content}`}
+                    </div>
+                  )}
                 </Text>
               </Box>
             ))}

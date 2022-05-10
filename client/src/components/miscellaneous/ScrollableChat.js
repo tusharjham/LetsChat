@@ -1,4 +1,4 @@
-import { Avatar, Tooltip } from "@chakra-ui/react";
+import { Avatar, Tooltip, Badge } from "@chakra-ui/react";
 import React from "react";
 import ScrollableFeed from "react-scrollable-feed";
 import {
@@ -8,13 +8,21 @@ import {
   isSameUser,
 } from "../../config/ChatLogic";
 import { ChatState } from "../../Context/ChatProvider";
-const ScrollableChat = ({ message }) => {
+const ScrollableChat = ({ message, selChat }) => {
   const { user } = ChatState();
   return (
     <ScrollableFeed>
       {message &&
         message.map((m, i) => (
-          <div style={{ display: "flex" }} key={m._id}>
+          <div
+            style={{
+              display: "flex",
+              // flexDirection: "row",
+              position: "relative",
+              alignItems: "center",
+            }}
+            key={m._id}
+          >
             {(isSameSender(message, m, i, user._id) ||
               isLastMessage(message, i, user._id)) && (
               <Tooltip label={m.sender.name} placement="bottom-start" hasArrow>
@@ -42,6 +50,18 @@ const ScrollableChat = ({ message }) => {
               }}
             >
               {m.content}
+            </span>
+            <span>
+              {m.sender._id !== user._id && selChat && selChat.isGroupChat && (
+                <Badge
+                  position={"absolute"}
+                  top={"6px"}
+                  borderRadius={"lg"}
+                  fontSize={"11px"}
+                >
+                  {m.sender.name}
+                </Badge>
+              )}
             </span>
           </div>
         ))}

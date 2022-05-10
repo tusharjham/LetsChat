@@ -23,7 +23,8 @@ const ENDPOINT = "http://localhost:5000";
 var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
-  const { user, selectedChat, setSelectedChat } = ChatState();
+  const { user, selectedChat, setSelectedChat, notification, setNotification } =
+    ChatState();
   const [message, setMessage] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -88,6 +89,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         );
         setMessage([...message, data]);
         socket.emit("new message", data);
+        setFetchAgain(!fetchAgain);
       } catch (err) {
         toast({
           title: "Error",
@@ -100,6 +102,40 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     }
   };
+  useEffect(() => {
+    fetchMessages();
+    setNewMessage("");
+    selectedChatCompare = selectedChat;
+  }, [selectedChat]);
+  useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("connected", () => {
+      setSocketConnected(true);
+    });
+    socket.on("istyping", (data) => {
+      if (selectedChatCompare && selectedChatCompare._id === data) {
+        setIsTyping(true);
+      }
+    });
+    socket.on("stop typing", () => setIsTyping(false));
+  }, []);
+  useEffect(() => {
+    socket.on("message recieved", (newMessageRecieved) => {
+      setFetchAgain(!fetchAgain);
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMessageRecieved.chat._id
+      ) {
+        if (!notification.includes(newMessageRecieved)) {
+          setNotification([newMessageRecieved, ...notification]);
+          setFetchAgain(!fetchAgain);
+        }
+      } else {
+        setMessage([...message, newMessageRecieved]);
+      }
+    });
+  });
   const typeHandler = (e) => {
     setNewMessage(e.target.value);
     if (e.target.value.length === 0) {
@@ -123,31 +159,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     }, timerLength);
   };
-  useEffect(() => {
-    socket = io(ENDPOINT);
-    socket.emit("setup", user);
-    socket.on("connected", () => {
-      setSocketConnected(true);
-    });
-    socket.on("typing", () => setIsTyping(true));
-    socket.on("stop typing", () => setIsTyping(false));
-  }, []);
-  useEffect(() => {
-    fetchMessages();
-    selectedChatCompare = selectedChat;
-  }, [selectedChat, fetchAgain]);
-  useEffect(() => {
-    socket.on("message recieved", (newMessageRecieved) => {
-      if (
-        !selectedChatCompare ||
-        selectedChatCompare._id !== newMessageRecieved.chat._id
-      ) {
-        // Give notificaiton
-      } else {
-        setMessage([...message, newMessageRecieved]);
-      }
-    });
-  });
 
   return (
     <>
@@ -208,7 +219,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             ) : (
               <>
                 <div className="messages">
-                  <ScrollableChat message={message} />
+                  <ScrollableChat
+                    message={message}
+                    selChat={selectedChatCompare}
+                  />
                 </div>
               </>
             )}
