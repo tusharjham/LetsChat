@@ -190,7 +190,6 @@ const SignUp = () => {
           accept="image/*"
           p={1}
           onChange={(e) => postDetails(e.target.files[0])}
-          value={pic}
         />
       </FormControl>
       <Button
