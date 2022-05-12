@@ -3,6 +3,8 @@ import {
   Button,
   FormControl,
   Input,
+  InputGroup,
+  InputRightElement,
   Spinner,
   Text,
   useToast,
@@ -31,6 +33,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [sendMsg, setSendMsg] = useState(false);
   const toast = useToast();
   const defaultOptions = {
     loop: true,
@@ -87,8 +90,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           },
           config
         );
-        setMessage([...message, data]);
         socket.emit("new message", data);
+        setMessage([...message, data]);
         setFetchAgain(!fetchAgain);
       } catch (err) {
         toast({
@@ -243,14 +246,32 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               ) : (
                 <></>
               )}
-              <Input
-                variant={"filled"}
-                placeholder={"Enter a message"}
-                onChange={typeHandler}
-                focusBorderColor={"red.700"}
-                bg={"#eaeaea"}
-                value={newMessage}
-              />
+              <InputGroup>
+                <Input
+                  variant={"filled"}
+                  placeholder={"Enter a message"}
+                  onChange={typeHandler}
+                  focusBorderColor={"red.700"}
+                  bg={"#eaeaea"}
+                  value={newMessage}
+                />
+                <InputRightElement>
+                  <button
+                    // style={{ outline: "none" }}
+                    // border="none"
+                    // bg="none"
+                    // variant="unstyled"
+                    onClick={() => {
+                      sendMessage({ code: "Enter" });
+                    }}
+                  >
+                    <i
+                      class="fa-solid fa-angles-right"
+                      style={{ color: "#9b2c2c" }}
+                    ></i>
+                  </button>
+                </InputRightElement>
+              </InputGroup>
             </FormControl>
           </Box>
         </>
