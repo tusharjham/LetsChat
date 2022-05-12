@@ -74,7 +74,7 @@ const SignUp = () => {
       setLoading(false);
       toast({
         title: "Error",
-        description: err.toString(),
+        description: err.response.data.message,
         status: "error",
         duration: 7000,
         isClosable: true,
